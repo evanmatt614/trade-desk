@@ -610,7 +610,7 @@ document.querySelector(".tabs").onclick = e => {
 };
 
 /* ---------- Claude API ---------- */
-async function claude(content, {search=true, maxTokens=6000} = {}){
+async function claude(content, {search=true, maxTokens=16000} = {}){
   if(!settings.key) throw new Error("Add your Anthropic API key in ⚙ Settings first.");
   const body = {model:settings.model, max_tokens:maxTokens, messages:[{role:"user", content}]};
   if(search && settings.web) body.tools = [{type:"web_search_20250305", name:"web_search", max_uses:5}];
@@ -629,18 +629,42 @@ async function claude(content, {search=true, maxTokens=6000} = {}){
       : "Anthropic error: " + m);
   }
   let d = await r.json(), blocks = [...d.content];
-  for(let i = 0; d.stop_reason === "pause_turn" && i < 3; i++){
+  for(let i = 0; d.stop_reason === "pause_turn" && i < 4; i++){
     body.messages = [{role:"user", content}, {role:"assistant", content:blocks}];
     const r2 = await post(body); if(!r2.ok) break; d = await r2.json(); blocks = blocks.concat(d.content);
   }
-  const text = blocks.filter(b => b.type === "text").map(b => b.text).join("\n");
-  return extractJSON(text);
+  // Web-search answers arrive as many text blocks (split around citations): join them back seamlessly.
+  const text = blocks.filter(b => b.type === "text").map(b => b.text).join("");
+  window.__lastClaudeText = text;
+  const parsed = tryJSON(text);
+  if(parsed) return parsed;
+  // Backup: ask Claude (no tools) to turn its own answer into clean JSON.
+  const ask = typeof content === "string" ? content : (content.find(c => c.type === "text") || {}).text || "";
+  const specAt = ask.search(/\{"(verdict|assessment|leagueName)"/);
+  const spec = specAt >= 0 ? ask.slice(specAt) : ask.slice(-1500);
+  const fix = await post({model:settings.model, max_tokens:8000, messages:[{role:"user", content:
+    `Convert the analysis below into ONLY a valid JSON object matching this format, with no other text, no markdown and no citations:\n${spec}\n\nANALYSIS:\n${text.slice(-30000) || "(empty: produce your best answer to the original request)\n" + ask}`}]}).catch(() => null);
+  if(fix && fix.ok){
+    const fd = await fix.json();
+    const f = tryJSON(fd.content.filter(b => b.type === "text").map(b => b.text).join(""));
+    if(f) return f;
+  }
+  throw new Error(d.stop_reason === "max_tokens" ? "Claude's answer was too long and got cut off. Try again, or turn off \"Check latest news\" in ⚙ Settings." : "Claude's answer couldn't be read. Try again.");
 }
-function extractJSON(text){
+function tryJSON(text){
   const t = String(text).replace(/```(?:json)?/g, "");
   const end = t.lastIndexOf("}");
-  for(let i = t.indexOf("{"); i >= 0 && i < end; i = t.indexOf("{", i+1)){ try{ return JSON.parse(t.slice(i, end+1)); }catch(e){} }
-  throw new Error("Claude's answer couldn't be read. Try again.");
+  if(end < 0) return null;
+  const cands = [];
+  for(let i = t.indexOf("{"); i >= 0 && i < end; i = t.indexOf("{", i+1)) cands.push(t.slice(i, end+1));
+  // Prefer the last JSON object that starts with a key we expect.
+  cands.sort((a, b) => (/^\{\s*"(verdict|assessment|leagueName|teams|ideas)"/.test(b) ? 1 : 0) - (/^\{\s*"(verdict|assessment|leagueName|teams|ideas)"/.test(a) ? 1 : 0));
+  for(const c of cands){
+    for(const v of [c, c.replace(/[\r\n\t]+/g, " "), c.replace(/[\r\n\t]+/g, " ").replace(/,\s*([}\]])/g, "$1")]){
+      try{ const o = JSON.parse(v); if(o && typeof o === "object") return o; }catch(e){}
+    }
+  }
+  return null;
 }
 
 function leagueContext(){
@@ -677,7 +701,7 @@ Trade proposal — I GIVE: ${S.give.join("; ")}
 I GET: ${S.get.join("; ")}
 ${ctx}
 
-Evaluate from MY perspective. After any research, end your reply with ONLY this JSON object:
+Evaluate from MY perspective. After any research, end your reply with ONLY this JSON object (plain text values, no citations or markdown inside it):
 {"verdict":"accept"|"decline"|"counter","grade":"A+ to F for me","balance":-100..100 (negative = I lose value, 0 = fair),
 "summary":"2-3 sentence bottom line","players":[{"name":"","side":"give"|"get","value":"short label e.g. 'Mid RB1'","note":"one sentence incl. any current news"}],
 "rosterFit":"1-2 sentences on lineup impact and my goal","risks":["…"],"counter":{"ask":"specific counter-offer using real players/picks from the rosters, or empty","why":""},
@@ -729,7 +753,7 @@ Work like a sharp trade scout:
 2. For each other team, judge whether it's a contender or a rebuilder from its record and points, and what it lacks.
 3. Match my surplus to their needs and their surplus to mine.
 Recommend the 5 best realistic trades, best first. Use only players and picks that are actually on the rosters. Each trade should be fair enough that the other manager would plausibly accept. Spread the trades across different partners where you can.
-After any research, end with ONLY this JSON:
+After any research, end with ONLY this JSON (plain text values, no citations or markdown inside it):
 {"assessment":"2 sentences on my strengths, holes and whether I should be buying or selling","direction":"buy"|"sell"|"balanced",
 "ideas":[{"title":"short punchy label","partner":"exact team name","give":["…"],"get":["…"],"why":"1-2 sentences on why it helps me","theyWin":"one sentence on why they'd say yes","impact":"high"|"medium"|"low","pitch":"one-line message to send the other manager"}]}`;
   ideasRunning = true;
