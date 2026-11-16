@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0d1117">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Trade Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d1117;--panel:#161b22;--panel2:#1d2430;--line:#2a3340;--text:#e8edf3;--muted:#8b97a7;--accent:#3ddc97;--give:#ff6b6b;--get:#3ddc97;--warn:#ffc857;--blue:#5aa9ff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:0 auto;padding:18px 16px 60px}
+h1,h2,h3,.cond{font-family:"Barlow Condensed",sans-serif;letter-spacing:.02em}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+h1{font-size:34px;margin:0;font-weight:800;text-transform:uppercase;white-space:nowrap}
+h1 span{color:var(--accent)}
+.iconbtn{background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:10px;width:42px;height:42px;font-size:19px;cursor:pointer}
+.tabs{display:flex;gap:6px;background:var(--panel);padding:5px;border-radius:12px;margin-bottom:14px}
+.tabs button{flex:1;background:none;border:0;color:var(--muted);padding:10px;border-radius:9px;font:600 14px Inter;cursor:pointer}
+.tabs button.on{background:var(--panel2);color:var(--text)}
+.seg{display:flex;gap:6px;margin-bottom:10px}
+.seg button{flex:1;border:1px solid var(--line);background:var(--panel2);color:var(--muted);padding:9px;border-radius:9px;font:600 14px Inter;cursor:pointer}
+.seg button.on{background:var(--blue);border-color:var(--blue);color:#04182e}
+.sports{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:12px;scrollbar-width:none}
+.sports::-webkit-scrollbar{display:none}
+.sport{flex:0 0 auto;border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:8px 13px;border-radius:999px;font:600 14px Inter;cursor:pointer;white-space:nowrap}
+.sport.on{background:var(--accent);color:#06281a;border-color:var(--accent)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.card h3{margin:0 0 10px;font-size:18px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stack{display:grid;gap:10px}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px;font-weight:500}
+select,input,textarea{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:9px;padding:10px;font:15px Inter}
+textarea{resize:vertical;min-height:64px}
+select:focus,input:focus,textarea:focus{outline:2px solid var(--blue);outline-offset:-1px;border-color:transparent}
+.btn2{border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:9px;padding:10px 13px;font:600 14px Inter;cursor:pointer;white-space:nowrap}
+.btn2.primary{background:var(--blue);border-color:var(--blue);color:#04182e}
+.btn2:disabled{opacity:.55}
+.row{display:flex;gap:8px;align-items:flex-end}
+.row > *{flex:1}
+.row > .btn2{flex:0 0 auto}
+.sides{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:560px){.sides{grid-template-columns:1fr}}
+.side{border-radius:14px;padding:12px;background:var(--panel);border:1px solid var(--line)}
+.side.give{border-top:3px solid var(--give)}.side.get{border-top:3px solid var(--get)}
+.side h3{margin:0 0 8px;font-size:20px;text-transform:uppercase}
+.give h3{color:var(--give)}.get h3{color:var(--get)}
+.addrow{display:flex;gap:6px}
+.addrow button{flex:0 0 44px;border-radius:9px;background:var(--panel2);color:var(--text);font-size:22px;cursor:pointer;border:1px solid var(--line)}
+.chips{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.chip{display:flex;align-items:center;justify-content:space-between;background:var(--panel2);border-radius:9px;padding:8px 10px;font-weight:600}
+.chip button{background:none;border:0;color:var(--muted);font-size:18px;cursor:pointer;padding:0 4px}
+.empty{color:var(--muted);font-size:13px;padding:6px 2px}
+.quick{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;max-height:132px;overflow-y:auto}
+.quick button{border:1px solid var(--line);background:none;color:var(--muted);border-radius:999px;padding:5px 10px;font:500 12px Inter;cursor:pointer}
+.quick button.pick{border-style:dashed}
+details summary{cursor:pointer;color:var(--muted);font-weight:600;font-size:14px;list-style:none}
+details summary::-webkit-details-marker{display:none}
+details.plus summary::before{content:"＋ ";color:var(--accent)}
+details.plus[open] summary::before{content:"－ "}
+details .inner{margin-top:10px;display:grid;gap:10px}
+.go{width:100%;border:0;border-radius:12px;padding:15px;background:var(--accent);color:#06281a;font:800 20px "Barlow Condensed";text-transform:uppercase;letter-spacing:.05em;cursor:pointer}
+.go:disabled{opacity:.6}
+.note{font-size:12px;color:var(--muted);margin:8px 2px 0}
+.small{font-size:13px;color:var(--muted)}
+.err{background:#3a1d22;border:1px solid #6b2a33;color:#ffb3b3;border-radius:12px;padding:12px;margin-top:12px;font-size:14px}
+.ok{background:#123526;border:1px solid #1f6b4a;color:#9ff0c9;border-radius:12px;padding:10px 12px;font-size:14px}
+#result{margin-top:14px}
+.verdict{border-radius:14px;padding:16px;margin-bottom:12px;border:1px solid var(--line);background:var(--panel)}
+.vhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.badge{font:800 24px "Barlow Condensed";text-transform:uppercase;padding:4px 14px;border-radius:8px;letter-spacing:.04em}
+.b-accept{background:var(--get);color:#06281a}.b-decline{background:var(--give);color:#2b0606}.b-counter{background:var(--warn);color:#2b2006}
+.bar{position:relative;height:12px;border-radius:6px;background:linear-gradient(90deg,var(--give),#3a4250 50%,var(--get));margin-top:14px}
+.pin{position:absolute;top:-5px;width:4px;height:22px;background:#fff;border-radius:2px;transform:translateX(-2px);box-shadow:0 0 0 2px var(--bg)}
+.mlabels{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:6px}
+.players{display:grid;gap:8px}
+.pl{background:var(--panel2);border-radius:10px;padding:10px 12px}
+.pl .top{display:flex;justify-content:space-between;gap:8px;font-weight:600}
+.pl .val{font:700 16px "Barlow Condensed";white-space:nowrap}
+.pl .why{font-size:13px;color:var(--muted);margin-top:4px}
+.side-tag{font-size:11px;font-weight:700;text-transform:uppercase;margin-right:6px}
+ul.clean{margin:0;padding-left:18px}ul.clean li{margin:4px 0}
+.counter{background:#2a2614;border:1px solid #5a4d1c;border-radius:12px;padding:12px}.counter b{color:var(--warn)}
+.idea{background:var(--panel2);border-radius:12px;padding:12px;margin-bottom:8px}
+.pills{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.pill{font-size:13px;font-weight:600;padding:4px 9px;border-radius:999px}
+.pill.g{background:#3a1d22;color:#ffb3b3}.pill.r{background:#123526;color:#9ff0c9}
+.hitem{display:flex;justify-content:space-between;gap:8px;background:var(--panel2);border-radius:9px;padding:9px 11px;cursor:pointer;font-size:13px;margin-bottom:6px}
+.spin{display:inline-block;width:16px;height:16px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:s 1s linear infinite;vertical-align:-3px;margin-right:8px}
+@keyframes s{to{transform:rotate(360deg)}}
+.hidden{display:none!important}
+.linkbtn{background:none;border:0;color:var(--blue);cursor:pointer;font:600 13px Inter;padding:0}
+.lgitem{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--panel2);border-radius:10px;padding:10px 12px;margin-top:6px}
+.lgitem b{display:block}
+.team{background:var(--panel2);border-radius:9px;padding:8px 10px;font-size:13px;margin-top:6px}
+.team summary{display:flex;justify-content:space-between;color:var(--text);font-size:14px}
+.team .roster{color:var(--muted);margin-top:6px;line-height:1.6}
+.mine{color:var(--accent);font-size:11px;font-weight:700;text-transform:uppercase;margin-left:6px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px #3ddc9733;margin-right:7px}
+.drop{border:2px dashed var(--line);border-radius:12px;padding:16px;text-align:center;color:var(--muted);font-size:14px;cursor:pointer;display:block}
+.drop.has{border-color:var(--blue);color:var(--text)}
+.thumbs{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+.thumbs img{width:54px;height:72px;object-fit:cover;border-radius:6px;border:1px solid var(--line)}
+.toggle{display:flex;align-items:center;gap:10px;font-size:14px}
+.toggle input{width:auto}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Trade <span>Desk</span></h1>
+    <button class="iconbtn" id="gear" aria-label="Settings">⚙</button>
+  </header>
+
+  <!-- SETTINGS -->
+  <div class="card hidden" id="settingsCard">
+    <h3>Settings</h3>
+    <div class="stack">
+      <div><label>Anthropic API key (for trade analysis)</label>
+        <input id="apiKey" type="password" placeholder="sk-ant-…" autocomplete="off"></div>
+      <div class="small">Get one at console.anthropic.com → API Keys. It's stored only in this browser and sent only to Anthropic. Each analysis costs a few cents.</div>
+      <div class="grid">
+        <div><label>Model</label><select id="model">
+          <option value="claude-sonnet-5-5">Sonnet 5.5 (recommended)</option>
+          <option value="claude-opus-5-5">Opus 5.5 (smartest)</option>
+          <option value="claude-haiku-5-5">Haiku 5.5 (cheapest)</option></select></div>
+        <div style="display:flex;align-items:flex-end"><label class="toggle"><input type="checkbox" id="webSearch" checked> Check latest news</label></div>
+      </div>
+      <button class="btn2 primary" id="saveSettings">Save</button>
+    </div>
+  </div>
+
+  <!-- LEAGUE -->
+  <div class="card">
+    <h3 style="display:flex;justify-content:space-between;align-items:center">League <button class="linkbtn" id="connectToggle">+ Connect a league</button></h3>
+    <select id="activeLeague"></select>
+
+    <div id="leagueSummary" style="margin-top:10px"></div>
+
+    <div id="manualSettings" style="margin-top:10px">
+      <div class="sports" id="sports"></div>
+      <div class="grid">
+        <div><label>Format</label><select id="format"><option>Redraft</option><option>Keeper</option><option>Dynasty</option></select></div>
+        <div><label>Scoring</label><select id="scoring"></select></div>
+        <div><label>Teams</label><select id="teams"><option>8</option><option>10</option><option selected>12</option><option>14</option><option>16</option></select></div>
+        <div><label>Platform</label><select id="platform"><option>ESPN</option><option>Yahoo</option><option>Sleeper</option><option>Fantrax</option><option>CBS</option><option>NFL.com</option><option>FPL</option><option>Other</option></select></div>
+      </div>
+    </div>
+
+    <!-- CONNECT -->
+    <div id="connectBox" class="hidden" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">
+      <div class="seg" id="connSeg">
+        <button data-conn="sleeper" class="on">Sleeper</button><button data-conn="espn">ESPN</button><button data-conn="import">Yahoo & others</button>
+      </div>
+
+      <div data-pane="sleeper" class="stack">
+        <div class="row"><div><label>Sleeper username</label><input id="sleeperUser" placeholder="e.g. evanmatt614" autocapitalize="off" autocorrect="off"></div>
+          <button class="btn2 primary" id="findSleeper">Find leagues</button></div>
+        <div id="sleeperLeagues"></div>
+      </div>
+
+      <div data-pane="espn" class="stack hidden">
+        <div class="grid">
+          <div><label>Sport</label><select id="espnSport"><option value="NFL">Football</option><option value="NBA">Basketball</option><option value="MLB">Baseball</option><option value="NHL">Hockey</option></select></div>
+          <div><label>Season</label><input id="espnSeason" inputmode="numeric"></div>
+        </div>
+        <div class="row"><div><label>ESPN league ID</label><input id="espnId" inputmode="numeric" placeholder="From the league URL: leagueId=…"></div>
+          <button class="btn2 primary" id="connectEspn">Connect</button></div>
+        <div class="small">ESPN only shares <b>public</b> leagues this way. The league manager can turn this on in League Settings → "Make league viewable to public". For a private league, use "Yahoo & others" with screenshots.</div>
+        <div id="espnMsg"></div>
+      </div>
+
+      <div data-pane="import" class="stack hidden">
+        <div class="small">For Yahoo, Fantrax, CBS and others: screenshot rosters in the app, or copy a rosters page, and Claude reads them in. You'll need your API key in ⚙ Settings.</div>
+        <div class="grid">
+          <div><label>Platform</label><select id="impPlatform"><option>Yahoo</option><option>ESPN</option><option>Fantrax</option><option>CBS</option><option>NFL.com</option><option>FPL</option><option>Other</option></select></div>
+          <div><label>Sport</label><select id="impSport"></select></div>
+        </div>
+        <label class="drop" id="drop"><input type="file" id="shots" accept="image/*" multiple hidden>
+          📸 Tap to add roster screenshots<br><span style="font-size:12px">Your team plus any teams you might trade with</span><div class="thumbs" id="thumbs"></div></label>
+        <div><label>…or paste roster text</label><textarea id="pasteRosters" placeholder="Paste a rosters page"></textarea></div>
+        <div class="row"><div><label>Your team name</label><input id="impMine" placeholder="Helps spot your team"></div>
+          <button class="btn2 primary" id="importBtn">Import</button></div>
+        <div id="impMsg"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="on" data-tab="analyze">Analyze a trade</button>
+    <button data-tab="ideas">Find trades</button>
+  </div>
+
+  <!-- ANALYZE -->
+  <section id="tab-analyze">
+    <div class="sides">
+      <div class="side give">
+        <h3>You give</h3>
+        <div class="addrow"><input id="giveIn" list="myPlayers" placeholder="Player or pick" enterkeyhint="done"><button data-add="give" aria-label="Add">+</button></div>
+        <div class="quick" id="myQuick"></div>
+        <div class="chips" id="giveList"></div>
+      </div>
+      <div class="side get">
+        <h3>You get</h3>
+        <div id="partnerWrap" class="hidden" style="margin-bottom:8px"><select id="partner"></select></div>
+        <div class="addrow"><input id="getIn" list="theirPlayers" placeholder="Player or pick" enterkeyhint="done"><button data-add="get" aria-label="Add">+</button></div>
+        <div class="quick" id="partnerQuick"></div>
+        <div class="chips" id="getList"></div>
+      </div>
+    </div>
+    <datalist id="myPlayers"></datalist><datalist id="theirPlayers"></datalist>
+
+    <div class="card" style="margin-top:12px">
+      <details class="plus"><summary>Add context</summary>
+        <div class="inner">
+          <div id="rosterField"><label>Your roster</label><textarea id="roster" placeholder="Paste your roster (filled in automatically when a league is connected)"></textarea></div>
+          <div class="grid">
+            <div><label>Your record / standing</label><input id="record" placeholder="e.g. 6-4, 3rd place"></div>
+            <div><label>Your goal</label><select id="goal"><option>Win now</option><option selected>Balanced</option><option>Rebuild / future</option></select></div>
+          </div>
+          <div><label>Anything else to know</label><textarea id="news" placeholder="Injuries, the other manager's tendencies, etc."></textarea></div>
+        </div>
+      </details>
+    </div>
+    <button class="go" id="analyzeBtn" data-label="Analyze trade">Analyze trade</button>
+  </section>
+
+  <!-- IDEAS -->
+  <section id="tab-ideas" class="hidden">
+    <div class="card"><div class="stack">
+      <div id="roster2Field"><label>Your roster</label><textarea id="roster2" style="min-height:100px" placeholder="Paste your roster, or connect a league"></textarea></div>
+      <div class="grid">
+        <div><label>Biggest need</label><input id="need" placeholder="e.g. RB2, saves"></div>
+        <div><label>Goal</label><select id="goal2"><option>Win now</option><option selected>Balanced</option><option>Rebuild / future</option></select></div>
+      </div>
+      <div><label>Players you'd move (optional)</label><input id="expendable" placeholder="e.g. surplus WRs"></div>
+      <div id="othersField"><label>Other teams' rosters (optional)</label><textarea id="others" placeholder="Paste a trade partner's roster"></textarea></div>
+      <div class="small hidden" id="othersAuto">Every team's roster from your connected league is included automatically.</div>
+    </div></div>
+    <button class="go" id="ideasBtn" data-label="Find trade ideas">Find trade ideas</button>
+  </section>
+
+  <div id="result"></div>
+
+  <div class="card hidden" id="histCard" style="margin-top:14px">
+    <h3 style="display:flex;justify-content:space-between;align-items:center">Recent <button class="linkbtn" id="clearHist">Clear</button></h3>
+    <div id="hist"></div>
+  </div>
+  <p class="note" style="text-align:center">Trade Desk · Sleeper data from the public Sleeper API · analysis by Claude</p>
+</div>
+
+<script>
+/* ---------- basics ---------- */
+const SPORTS = {
+  NFL:{name:"Football",  scoring:["PPR","Half PPR","Standard","Superflex PPR","TE Premium"], sleeper:"nfl", espn:"ffl"},
+  NBA:{name:"Basketball",scoring:["Points","9-Cat H2H","8-Cat H2H","Roto"], sleeper:"nba", espn:"fba"},
+  MLB:{name:"Baseball",  scoring:["5x5 Roto","H2H Categories","H2H Points"], espn:"flb"},
+  NHL:{name:"Hockey",    scoring:["H2H Categories","Points","Roto"], espn:"fhl"},
+  WNBA:{name:"WNBA",     scoring:["Points","Categories"]},
+  Soccer:{name:"Soccer",  scoring:["FPL Points","Points","Categories"]},
+  CFB:{name:"College FB",scoring:["PPR","Half PPR","Standard"]},
+};
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const store = {
+  get(k,d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+  set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); return true; }catch(e){ return false; } },
+  del(k){ try{ localStorage.removeItem(k); }catch(e){} }
+};
+const S = { sport: store.get("td-sport","NFL"), tab:"analyze", give:[], get:[] };
+if(!SPORTS[S.sport]) S.sport = "NFL";
+let settings = Object.assign({key:"", model:"claude-sonnet-5-5", web:true}, store.get("td-settings", {}));
+let leagues = store.get("td-leagues", []);
+let activeKey = store.get("td-active", "");
+const ord = n => n + (["th","st","nd","rd"][((n%100)-20)%10] || ["th","st","nd","rd"][n%100] || "th");
+const today = () => new Date().toLocaleDateString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
+function saveLeagues(){ if(!store.set("td-leagues", leagues)) console.warn("Could not save leagues"); }
+const active = () => leagues.find(l => l.key === activeKey) || null;
+const myTeam = L => L && L.teams.find(t => t.isMine);
+const fmtP = p => [p.pos, p.name, p.team && "("+p.team+")", p.status && "["+p.status+"]"].filter(Boolean).join(" ");
+const fmtRoster = t => t.players.map(fmtP).join(", ");
+
+/* ---------- settings ---------- */
+$("gear").onclick = () => { $("settingsCard").classList.toggle("hidden"); $("apiKey").value = settings.key; $("model").value = settings.model; $("webSearch").checked = settings.web; };
+$("saveSettings").onclick = () => {
+  settings = {key:$("apiKey").value.trim(), model:$("model").value, web:$("webSearch").checked};
+  store.set("td-settings", settings); $("settingsCard").classList.add("hidden");
+};
+
+/* ---------- manual sport/league settings ---------- */
+function renderSports(){
+  $("sports").innerHTML = Object.entries(SPORTS).map(([k,v]) => `<button class="sport ${k===S.sport?'on':''}" data-sport="${k}">${esc(v.name)}</button>`).join("");
+  $("scoring").innerHTML = SPORTS[S.sport].scoring.map(s => `<option>${esc(s)}</option>`).join("");
+  const sv = store.get("td-manual-"+S.sport, null);
+  if(sv) for(const k of ["format","scoring","teams","platform"]) if(sv[k]) $(k).value = sv[k];
+}
+$("sports").onclick = e => { const b = e.target.closest("[data-sport]"); if(!b) return; S.sport = b.dataset.sport; store.set("td-sport", S.sport); renderSports(); };
+for(const k of ["format","scoring","teams","platform"]) $(k).addEventListener("change", () =>
+  store.set("td-manual-"+S.sport, {format:$("format").value, scoring:$("scoring").value, teams:$("teams").value, platform:$("platform").value}));
+
+/* ---------- connect panel ---------- */
+$("connectToggle").onclick = () => $("connectBox").classList.toggle("hidden");
+$("connSeg").onclick = e => {
+  const b = e.target.closest("[data-conn]"); if(!b) return;
+  document.querySelectorAll("#connSeg button").forEach(x => x.classList.toggle("on", x===b));
+  document.querySelectorAll("[data-pane]").forEach(p => p.classList.toggle("hidden", p.dataset.pane !== b.dataset.conn));
+};
+$("espnSeason").value = new Date().getFullYear();
+$("impSport").innerHTML = Object.entries(SPORTS).map(([k,v]) => `<option value="${k}">${esc(v.name)}</option>`).join("");
+$("sleeperUser").value = store.get("td-sleeper-user", "");
+
+function busy(btn, on, label){ btn.disabled = on; btn.innerHTML = on ? `<span class="spin"></span>${label||"Working…"}` : (btn.dataset.label || btn.textContent); }
+["findSleeper","connectEspn","importBtn","analyzeBtn","ideasBtn"].forEach(id => { if(!$(id).dataset.label) $(id).dataset.label = $(id).textContent; });
+
+/* ---------- Sleeper ---------- */
+const SLEEPER = "https://api.sleeper.app/v1/";
+async function sj(path){
+  let r;
+  try{ r = await fetch(SLEEPER + path); }catch(e){ throw new Error("Couldn't reach Sleeper. Check your connection."); }
+  if(!r.ok) throw new Error("Sleeper returned an error ("+r.status+").");
+  return r.json();
+}
+async function sleeperPlayers(sport, force){
+  const key = "td-players-"+sport, cached = store.get(key, null);
+  if(cached && !force && Date.now() - cached.t < 24*3600e3) return cached.p;
+  const raw = await sj("players/"+sport);
+  const p = {};
+  for(const [id, x] of Object.entries(raw||{})){
+    if(!x || !(x.active || x.team || x.position === "DEF")) continue;
+    const name = x.full_name || [x.first_name, x.last_name].filter(Boolean).join(" ") || id;
+    p[id] = [name, x.position || (x.fantasy_positions||[])[0] || "", x.team || "", x.injury_status || "", x.age || ""];
+  }
+  if(!store.set(key, {t:Date.now(), p})) memPlayers[sport] = p;
+  return p;
+}
+const memPlayers = {};
+
+$("findSleeper").onclick = async () => {
+  const u = $("sleeperUser").value.trim(); if(!u) return;
+  const btn = $("findSleeper"); busy(btn, true, "Finding…"); $("sleeperLeagues").innerHTML = "";
+  try{
+    const user = await sj("user/"+encodeURIComponent(u));
+    if(!user || !user.user_id) throw new Error(`No Sleeper user named "${u}".`);
+    store.set("td-sleeper-user", u);
+    const found = [];
+    for(const sport of ["nfl","nba"]){
+      const st = await sj("state/"+sport).catch(() => null);
+      const season = (st && (st.league_season || st.season)) || String(new Date().getFullYear());
+      const ls = await sj(`user/${user.user_id}/leagues/${sport}/${season}`).catch(() => []);
+      (ls||[]).forEach(l => found.push({...l, _sport:sport, _week: st && st.week}));
+    }
+    if(!found.length){ $("sleeperLeagues").innerHTML = `<div class="err">No current leagues found for ${esc(u)}.</div>`; return; }
+    $("sleeperLeagues").innerHTML = `<div class="small">Found ${found.length} league${found.length>1?"s":""} for <b>${esc(user.display_name||u)}</b>:</div>` +
+      found.map((l,i) => `<div class="lgitem"><div><b>${esc(l.name)}</b><span class="small">${l._sport.toUpperCase()} · ${l.total_rosters} teams · ${["Redraft","Keeper","Dynasty"][(l.settings||{}).type]||"Redraft"}</span></div>
+        <button class="btn2 primary" data-sl="${i}">${leagues.some(x => x.key==="sleeper:"+l.league_id) ? "Refresh" : "Add"}</button></div>`).join("");
+    $("sleeperLeagues").onclick = async e => {
+      const b = e.target.closest("[data-sl]"); if(!b) return;
+      const l = found[+b.dataset.sl]; b.dataset.label = "Added ✓"; busy(b, true, "Loading…");
+      try{ await loadSleeperLeague(l.league_id, user.user_id, l._week); b.textContent = "Added ✓"; b.disabled = false; }
+      catch(err){ b.disabled = false; b.textContent = "Retry"; $("sleeperLeagues").insertAdjacentHTML("beforeend", `<div class="err">${esc(err.message)}</div>`); }
+    };
+  }catch(err){ $("sleeperLeagues").innerHTML = `<div class="err">${esc(err.message)}</div>`; }
+  finally{ busy(btn, false); }
+};
+
+async function loadSleeperLeague(leagueId, userId, week, forcePlayers){
+  const [lg, users, rosters, traded] = await Promise.all([
+    sj("league/"+leagueId), sj(`league/${leagueId}/users`), sj(`league/${leagueId}/rosters`), sj(`league/${leagueId}/traded_picks`).catch(() => [])
+  ]);
+  const sport = lg.sport || "nfl";
+  const P = await sleeperPlayers(sport, forcePlayers);
+  const uById = Object.fromEntries((users||[]).map(u => [u.user_id, u]));
+  const st = lg.settings || {}, sc = lg.scoring_settings || {}, pos = lg.roster_positions || [];
+  const teamName = r => { const u = uById[r.owner_id] || {}; return (u.metadata && u.metadata.team_name) || u.display_name || ("Team "+r.roster_id); };
+  const teams = (rosters||[]).map(r => {
+    const s = r.settings || {}, u = uById[r.owner_id] || {};
+    const players = (r.players||[]).map(id => {
+      const x = P[id];
+      const tag = (r.reserve||[]).includes(id) ? "IR" : (r.taxi||[]).includes(id) ? "Taxi" : "";
+      if(!x) return /^[A-Z]{2,3}$/.test(id) ? {name:id+" D/ST", pos:"DEF", team:id, status:""} : {name:"Player #"+id, pos:"", team:"", status:tag};
+      return {name:x[0], pos:x[1], team:x[2], status:[x[3], tag].filter(Boolean).join(", "), age:x[4]};
+    });
+    const fpts = (s.fpts||0) + (s.fpts_decimal||0)/100;
+    return {rid:r.roster_id, name:teamName(r), manager:u.display_name||"", isMine: !!userId && (r.owner_id===userId || (r.co_owners||[]).includes(userId)),
+      record:`${s.wins||0}-${s.losses||0}${s.ties ? "-"+s.ties : ""}`, pf: Math.round(fpts), players};
+  });
+  if(st.type === 2){
+    const rounds = st.draft_rounds || 4, base = +lg.season;
+    const start = (lg.status === "pre_draft" || lg.status === "drafting") ? base : base + 1;
+    for(const t of teams){
+      for(let y = start; y < start+3; y++) for(let rd = 1; rd <= rounds; rd++){
+        const tp = (traded||[]).find(p => +p.season===y && p.round===rd && p.roster_id===t.rid);
+        const owner = tp ? tp.owner_id : t.rid;
+        const holder = teams.find(x => x.rid === owner); if(!holder) continue;
+        holder.players.push({name:`${y} ${ord(rd)}`+(owner!==t.rid ? ` (via ${t.name})` : ""), pos:"PICK", team:"", status:""});
+      }
+    }
+  }
+  let scoring = "Points";
+  if(sport === "nfl"){
+    scoring = sc.rec === 1 ? "PPR" : sc.rec === 0.5 ? "Half PPR" : "Standard";
+    if(pos.includes("SUPER_FLEX")) scoring += ", Superflex";
+    if(sc.bonus_rec_te > 0) scoring += `, TE Premium (+${sc.bonus_rec_te})`;
+    if(sc.pass_td && sc.pass_td !== 4) scoring += `, ${sc.pass_td}-pt pass TD`;
+  }
+  const counts = {}; pos.forEach(p => counts[p] = (counts[p]||0)+1);
+  const L = {
+    key:"sleeper:"+leagueId, platform:"Sleeper", sid:leagueId, userId, sport: sport==="nba" ? "NBA" : "NFL",
+    name:lg.name, season:lg.season, week: week || null, format:["Redraft","Keeper","Dynasty"][st.type] || "Redraft",
+    scoring, size:lg.total_rosters, lineup:Object.entries(counts).map(([k,v]) => `${v} ${k}`).join(", "),
+    playoffStart: st.playoff_week_start || null, teams, updated:Date.now()
+  };
+  upsertLeague(L);
+}
+
+/* ---------- ESPN (public leagues) ---------- */
+const ESPN_POS = {
+  ffl:{1:"QB",2:"RB",3:"WR",4:"TE",5:"K",16:"D/ST"},
+  fba:{1:"PG",2:"SG",3:"SF",4:"PF",5:"C"},
+  flb:{1:"SP",2:"C",3:"1B",4:"2B",5:"3B",6:"SS",7:"LF",8:"CF",9:"RF",10:"DH",11:"RP"},
+  fhl:{1:"C",2:"LW",3:"RW",4:"D",5:"G"}
+};
+$("connectEspn").onclick = async () => {
+  const sport = $("espnSport").value, game = SPORTS[sport].espn, id = $("espnId").value.replace(/\D/g,""), season = $("espnSeason").value.trim();
+  if(!id){ $("espnMsg").innerHTML = `<div class="err">Enter your league ID.</div>`; return; }
+  const btn = $("connectEspn"); busy(btn, true, "Connecting…"); $("espnMsg").innerHTML = "";
+  try{ await loadEspnLeague(game, sport, id, season); $("espnMsg").innerHTML = `<div class="ok">Connected. Now pick which team is yours, under League.</div>`; }
+  catch(err){ $("espnMsg").innerHTML = `<div class="err">${esc(err.message)}</div>`; }
+  finally{ busy(btn, false); }
+};
+async function loadEspnLeague(game, sport, id, season, keepMine){
+  const url = `https://lm-api-reads.fantasy.espn.com/apis/v3/games/${game}/seasons/${season}/segments/0/leagues/${id}?view=mTeam&view=mRoster&view=mSettings`;
+  let r;
+  try{ r = await fetch(url); }catch(e){ throw new Error("ESPN blocked the request. This usually means the league is private. Make it viewable to the public, or use screenshots under \"Yahoo & others\"."); }
+  if(r.status === 401 || r.status === 403) throw new Error("That ESPN league is private. Ask the league manager to make it viewable to the public, or use screenshots.");
+  if(!r.ok) throw new Error("ESPN couldn't find that league ("+r.status+"). Check the ID and season.");
+  const d = await r.json();
+  const members = Object.fromEntries((d.members||[]).map(m => [m.id, m]));
+  const P = ESPN_POS[game] || {};
+  const teams = (d.teams||[]).map(t => {
+    const rec = (t.record && t.record.overall) || {};
+    return {rid:t.id, name: t.name || [t.location, t.nickname].filter(Boolean).join(" ") || t.abbrev || ("Team "+t.id),
+      manager: (members[(t.owners||[])[0]]||{}).displayName || "", isMine:false,
+      record:`${rec.wins||0}-${rec.losses||0}${rec.ties ? "-"+rec.ties : ""}`, pf: Math.round(rec.pointsFor||0),
+      players: ((t.roster||{}).entries||[]).map(e => { const p = (e.playerPoolEntry||{}).player || {};
+        return {name:p.fullName || "Unknown", pos:P[p.defaultPositionId] || "", team:"", status: p.injuryStatus && p.injuryStatus !== "ACTIVE" ? p.injuryStatus.replace(/_/g," ") : ""}; })};
+  });
+  if(!teams.length) throw new Error("ESPN returned no teams for that league.");
+  const ss = (d.settings||{}).scoringSettings || {};
+  let scoring = {H2H_POINTS:"H2H Points", H2H_CATEGORY:"H2H Categories", ROTISSERIE:"Roto", H2H_MOST_CATEGORIES:"H2H Most Categories"}[ss.scoringType] || "Points";
+  if(game === "ffl"){ const rec = (ss.scoringItems||[]).find(i => i.statId === 53); scoring = !rec ? "Standard" : rec.points >= 1 ? "PPR" : rec.points > 0 ? "Half PPR" : "Standard"; }
+  const old = leagues.find(l => l.key === `espn:${game}:${id}`);
+  if(old){ const m = myTeam(old); if(m){ const t = teams.find(x => x.rid === m.rid); if(t) t.isMine = true; } }
+  upsertLeague({key:`espn:${game}:${id}`, platform:"ESPN", game, eid:id, sport, name:(d.settings||{}).name || "ESPN league", season,
+    format: ((d.settings||{}).draftSettings||{}).keeperCount > 0 ? "Keeper" : "Redraft", scoring, size:teams.length, teams, updated:Date.now()});
+}
+
+/* ---------- Screenshot / paste import via Claude ---------- */
+let pendingShots = [];
+$("shots").onchange = async e => {
+  for(const f of e.target.files) pendingShots.push(await shrink(f));
+  e.target.value = "";
+  $("drop").classList.toggle("has", pendingShots.length > 0);
+  $("thumbs").innerHTML = pendingShots.map(s => `<img src="data:image/jpeg;base64,${s}" alt="">`).join("");
+};
+async function shrink(file){
+  const bmp = await createImageBitmap(file);
+  const k = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+  const c = document.createElement("canvas"); c.width = Math.round(bmp.width*k); c.height = Math.round(bmp.height*k);
+  c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+  return c.toDataURL("image/jpeg", 0.85).split(",")[1];
+}
+$("importBtn").onclick = async () => {
+  const text = $("pasteRosters").value.trim();
+  if(!pendingShots.length && !text){ $("impMsg").innerHTML = `<div class="err">Add a screenshot or paste roster text.</div>`; return; }
+  const sport = $("impSport").value, platform = $("impPlatform").value;
+  const btn = $("importBtn"); busy(btn, true, "Reading…"); $("impMsg").innerHTML = "";
+  try{
+    const prompt = `Extract fantasy ${SPORTS[sport].name} rosters from these ${platform} ${pendingShots.length ? "screenshots" : "text"}.
+${$("impMine").value.trim() ? `The user's own team is named or managed by "${$("impMine").value.trim()}".` : "Mark a team isMine if it is clearly the user's own (e.g. 'My Team', lineup controls)."}
+${text ? "Text:\n" + text.slice(0, 40000) : ""}
+Return ONLY JSON: {"leagueName":"","scoring":"","teams":[{"name":"","manager":"","record":"","isMine":false,"players":[{"name":"","pos":"","team":"","status":""}]}]}
+Include every readable player (bench and IR too). Never invent players. Unnamed teams: "Team 1", "Team 2"…`;
+    const content = [...pendingShots.map(data => ({type:"image", source:{type:"base64", media_type:"image/jpeg", data}})), {type:"text", text:prompt}];
+    const r = await claude(content, {search:false});
+    if(!r || !Array.isArray(r.teams) || !r.teams.length) throw new Error("Couldn't read any rosters. Try clearer screenshots or paste the text.");
+    const key = "import:"+sport+":"+platform;
+    const L = leagues.find(l => l.key === key) || {key, platform, sport, name:"", format:"", scoring:"", teams:[]};
+    if(r.leagueName) L.name = r.leagueName; if(r.scoring) L.scoring = r.scoring;
+    if(!L.name) L.name = `${platform} ${SPORTS[sport].name} league`;
+    for(const t of r.teams){
+      const ex = L.teams.find(x => x.name.toLowerCase() === String(t.name||"").toLowerCase());
+      if(ex){ ex.players = t.players || ex.players; if(t.record) ex.record = t.record; if(t.isMine) ex.isMine = true; }
+      else L.teams.push({name:t.name || "Team "+(L.teams.length+1), manager:t.manager||"", record:t.record||"", isMine:!!t.isMine, players:t.players||[]});
+    }
+    const mines = L.teams.filter(t => t.isMine); if(mines.length > 1) mines.slice(0,-1).forEach(t => t.isMine = false);
+    if(L.teams.length === 1) L.teams[0].isMine = true;
+    L.size = L.size || L.teams.length; L.updated = Date.now();
+    upsertLeague(L);
+    pendingShots = []; $("thumbs").innerHTML = ""; $("drop").classList.remove("has"); $("pasteRosters").value = "";
+    $("impMsg").innerHTML = `<div class="ok">Imported ${r.teams.length} team${r.teams.length>1?"s":""}. Add more any time and they'll merge in.</div>`;
+  }catch(err){ $("impMsg").innerHTML = `<div class="err">${esc(err.message)}</div>`; }
+  finally{ busy(btn, false); }
+};
+
+/* ---------- league state & rendering ---------- */
+function upsertLeague(L){
+  const i = leagues.findIndex(x => x.key === L.key);
+  if(i >= 0) leagues[i] = L; else leagues.push(L);
+  activeKey = L.key; store.set("td-active", activeKey); saveLeagues(); renderLeague();
+}
+function renderLeague(){
+  $("activeLeague").innerHTML = `<option value="">No league — enter details manually</option>` +
+    leagues.map(l => `<option value="${esc(l.key)}" ${l.key===activeKey?"selected":""}>${esc(l.name)} · ${esc(l.platform)} ${esc(SPORTS[l.sport]?.name||"")}</option>`).join("");
+  const L = active();
+  $("manualSettings").classList.toggle("hidden", !!L);
+  ["rosterField","roster2Field","othersField"].forEach(id => $(id).classList.toggle("hidden", !!(L && myTeam(L))));
+  $("othersAuto").classList.toggle("hidden", !L);
+  if(!L){ $("leagueSummary").innerHTML = ""; renderPartner(); return; }
+  const me = myTeam(L);
+  const ago = L.updated ? Math.round((Date.now()-L.updated)/60000) : null;
+  $("leagueSummary").innerHTML = `
+    <div class="small"><span class="dot"></span>${esc([L.format, L.scoring, L.size && L.size+" teams", L.week && "Week "+L.week].filter(Boolean).join(" · "))}
+      ${ago!==null ? ` · synced ${ago < 60 ? ago+"m" : Math.round(ago/60)+"h"} ago` : ""}</div>
+    <div class="row" style="margin-top:8px">
+      <select id="mineSel">${me ? "" : "<option value=''>Which team is yours?</option>"}${L.teams.map((t,i) => `<option value="${i}" ${t.isMine?"selected":""}>${esc(t.name)} (${esc(t.record||"")})</option>`).join("")}</select>
+      ${L.platform==="Sleeper" || L.platform==="ESPN" && L.game ? `<button class="btn2" id="refreshLg">↻</button>` : ""}
+    </div>
+    <details style="margin-top:8px"><summary>View all rosters</summary>
+      ${L.teams.map(t => `<details class="team"><summary><span>${esc(t.name)}${t.isMine?'<span class="mine">You</span>':""}</span><span class="small">${esc(t.record||"")}</span></summary><div class="roster">${esc(fmtRoster(t))}</div></details>`).join("")}
+      <button class="linkbtn" id="removeLg" style="color:var(--give);margin-top:10px">Remove this league</button>
+    </details>`;
+  $("mineSel").onchange = e => { L.teams.forEach((t,i) => t.isMine = String(i) === e.target.value); saveLeagues(); renderLeague(); };
+  if($("refreshLg")) $("refreshLg").onclick = () => refreshLeague(L, true);
+  $("removeLg").onclick = () => { leagues = leagues.filter(x => x.key !== L.key); activeKey = ""; store.set("td-active",""); saveLeagues(); renderLeague(); };
+  renderPartner();
+}
+async function refreshLeague(L, manual){
+  const b = $("refreshLg"); if(b){ b.disabled = true; b.innerHTML = '<span class="spin" style="margin:0"></span>'; }
+  try{
+    if(L.platform === "Sleeper") await loadSleeperLeague(L.sid, L.userId, L.week, manual);
+    else if(L.platform === "ESPN" && L.game) await loadEspnLeague(L.game, L.sport, L.eid, L.season);
+  }catch(err){ if(manual) $("leagueSummary").insertAdjacentHTML("beforeend", `<div class="err">${esc(err.message)}</div>`); }
+  finally{ if($("refreshLg")){ $("refreshLg").disabled = false; $("refreshLg").textContent = "↻"; } }
+}
+$("activeLeague").onchange = e => { activeKey = e.target.value; store.set("td-active", activeKey); S.give = []; S.get = []; renderSide("give"); renderSide("get"); renderLeague(); };
+
+/* ---------- trade builder ---------- */
+function renderSide(side){
+  $(side+"List").innerHTML = S[side].length
+    ? S[side].map((p,i) => `<div class="chip"><span>${esc(p)}</span><button data-rm="${side}:${i}" aria-label="Remove">×</button></div>`).join("")
+    : `<div class="empty">Add at least one</div>`;
+}
+function addPlayer(side, name){
+  const names = name ? [name] : $(side+"In").value.split(",").map(s => s.trim()).filter(Boolean);
+  if(!names.length) return;
+  S[side].push(...names.filter(n => !S[side].includes(n))); if(!name) $(side+"In").value = "";
+  renderSide(side); renderPartner();
+}
+document.addEventListener("click", e => {
+  const a = e.target.closest("[data-add]"); if(a) addPlayer(a.dataset.add);
+  const r = e.target.closest("[data-rm]"); if(r){ const [side,i] = r.dataset.rm.split(":"); S[side].splice(+i,1); renderSide(side); renderPartner(); }
+  const q = e.target.closest("[data-q]"); if(q) addPlayer(q.dataset.side, q.dataset.q);
+});
+["give","get"].forEach(s => $(s+"In").addEventListener("keydown", e => { if(e.key === "Enter"){ e.preventDefault(); addPlayer(s); } }));
+const partnerTeam = () => { const L = active(); return L && L.teams.find(t => !t.isMine && t.name === $("partner").value); };
+const quickBtns = (players, side) => players.filter(p => !S[side].includes(p.name))
+  .map(p => `<button class="${p.pos==="PICK"?"pick":""}" data-side="${side}" data-q="${esc(p.name)}">+ ${esc(p.name)}</button>`).join("");
+function renderPartner(){
+  const L = active(), me = myTeam(L), others = L ? L.teams.filter(t => !t.isMine) : [];
+  $("partnerWrap").classList.toggle("hidden", !others.length);
+  const prev = $("partner").value;
+  $("partner").innerHTML = `<option value="">Trade partner: any team</option>` + others.map(t => `<option ${t.name===prev?"selected":""}>${esc(t.name)}</option>`).join("");
+  const p = partnerTeam();
+  $("myPlayers").innerHTML = me ? me.players.map(x => `<option value="${esc(x.name)}">`).join("") : "";
+  $("theirPlayers").innerHTML = (p ? p.players : others.flatMap(t => t.players)).map(x => `<option value="${esc(x.name)}">`).join("");
+  $("myQuick").innerHTML = me ? quickBtns(me.players, "give") : "";
+  $("partnerQuick").innerHTML = p ? quickBtns(p.players, "get") : "";
+}
+$("partner").onchange = renderPartner;
+
+/* ---------- tabs ---------- */
+document.querySelector(".tabs").onclick = e => {
+  const b = e.target.closest("[data-tab]"); if(!b) return;
+  S.tab = b.dataset.tab;
+  document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("on", x===b));
+  $("tab-analyze").classList.toggle("hidden", S.tab !== "analyze");
+  $("tab-ideas").classList.toggle("hidden", S.tab !== "ideas");
+  $("result").innerHTML = "";
+};
+
+/* ---------- Claude API ---------- */
+async function claude(content, {search=true, maxTokens=6000} = {}){
+  if(!settings.key) throw new Error("Add your Anthropic API key in ⚙ Settings first.");
+  const body = {model:settings.model, max_tokens:maxTokens, messages:[{role:"user", content}]};
+  if(search && settings.web) body.tools = [{type:"web_search_20250305", name:"web_search", max_uses:5}];
+  const post = b => fetch("https://api.anthropic.com/v1/messages", {method:"POST",
+    headers:{"content-type":"application/json","x-api-key":settings.key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+    body:JSON.stringify(b)});
+  let r;
+  try{ r = await post(body); }catch(e){ throw new Error("Couldn't reach Anthropic. Check your connection."); }
+  if(!r.ok && body.tools && r.status === 400){ delete body.tools; r = await post(body); }
+  if(!r.ok){
+    const e = await r.json().catch(() => ({}));
+    const m = (e.error && e.error.message) || r.statusText;
+    throw new Error(r.status === 401 ? "Your API key was rejected. Check it in ⚙ Settings."
+      : r.status === 429 ? "Rate limited by Anthropic. Wait a minute and try again."
+      : r.status === 400 && /credit/i.test(m) ? "Your Anthropic account is out of credits. Add some at console.anthropic.com."
+      : "Anthropic error: " + m);
+  }
+  let d = await r.json(), blocks = [...d.content];
+  for(let i = 0; d.stop_reason === "pause_turn" && i < 3; i++){
+    body.messages = [{role:"user", content}, {role:"assistant", content:blocks}];
+    const r2 = await post(body); if(!r2.ok) break; d = await r2.json(); blocks = blocks.concat(d.content);
+  }
+  const text = blocks.filter(b => b.type === "text").map(b => b.text).join("\n");
+  return extractJSON(text);
+}
+function extractJSON(text){
+  const t = String(text).replace(/```(?:json)?/g, "");
+  const end = t.lastIndexOf("}");
+  for(let i = t.indexOf("{"); i >= 0 && i < end; i = t.indexOf("{", i+1)){ try{ return JSON.parse(t.slice(i, end+1)); }catch(e){} }
+  throw new Error("Claude's answer couldn't be read. Try again.");
+}
+
+function leagueContext(){
+  const L = active();
+  if(!L) return `Sport: ${SPORTS[S.sport].name}. Format: ${$("format").value}. Scoring: ${$("scoring").value}. ${$("teams").value}-team league on ${$("platform").value}.`;
+  return [`League: "${L.name}" on ${L.platform}. Sport: ${SPORTS[L.sport]?.name || L.sport}. Format: ${L.format}. Scoring: ${L.scoring}. ${L.size} teams.`,
+    L.lineup && `Starting lineup / roster slots: ${L.lineup}.`,
+    L.season && `Season ${L.season}${L.week ? ", current week "+L.week : ""}${L.playoffStart ? ", fantasy playoffs start week "+L.playoffStart : ""}.`].filter(Boolean).join("\n");
+}
+function base(){
+  return `You are an expert fantasy sports trade analyst. Today is ${today()}.
+${settings.web ? "Use web search to check the latest injury news, role changes and recent performance for the key players before judging. Keep searches focused." : "Your player knowledge may be out of date; say when a judgment depends on recent news you may not have."}
+Be direct and specific, like a sharp league-mate. Weigh positional scarcity, scoring format, league size, lineup slots, rest-of-season schedule, playoff timing, age and (for dynasty) long-term value and draft picks.`;
+}
+const showErr = m => { $("result").innerHTML = `<div class="err">${esc(m)}</div>`; };
+
+/* ---------- analyze ---------- */
+$("analyzeBtn").onclick = async () => {
+  if(!S.give.length || !S.get.length){ showErr("Add at least one player to each side."); return; }
+  const L = active(), me = myTeam(L), p = partnerTeam();
+  if(L && !me){ showErr("Pick which team is yours under League first."); return; }
+  const ctx = [
+    me ? `My team: ${me.name} (${me.record}${me.pf ? ", "+me.pf+" pts for" : ""}). Roster: ${fmtRoster(me)}` : ($("roster").value.trim() && "My roster: "+$("roster").value.trim()),
+    $("record").value.trim() && "My standing: "+$("record").value.trim(),
+    "My goal: "+$("goal").value,
+    p && `Trade partner: ${p.name} (${p.record}). Their roster: ${fmtRoster(p)}. Also judge whether they'd likely accept, given their needs.`,
+    L && !p && "Other teams' records: " + L.teams.filter(t => !t.isMine).map(t => `${t.name} ${t.record}`).join("; "),
+    $("news").value.trim() && "Extra context from me (trust it): "+$("news").value.trim()
+  ].filter(Boolean).join("\n");
+  const prompt = `${base()}
+
+${leagueContext()}
+Trade proposal — I GIVE: ${S.give.join("; ")}
+I GET: ${S.get.join("; ")}
+${ctx}
+
+Evaluate from MY perspective. After any research, end your reply with ONLY this JSON object:
+{"verdict":"accept"|"decline"|"counter","grade":"A+ to F for me","balance":-100..100 (negative = I lose value, 0 = fair),
+"summary":"2-3 sentence bottom line","players":[{"name":"","side":"give"|"get","value":"short label e.g. 'Mid RB1'","note":"one sentence incl. any current news"}],
+"rosterFit":"1-2 sentences on lineup impact and my goal","risks":["…"],"counter":{"ask":"specific counter-offer using real players/picks from the rosters, or empty","why":""},
+"partnerView":"one sentence on whether the other manager likely accepts, or empty"}`;
+  const btn = $("analyzeBtn"); busy(btn, true, settings.web ? "Checking news & crunching…" : "Crunching the deal…"); $("result").innerHTML = "";
+  try{
+    const r = await claude(prompt);
+    renderAnalysis(r); addHist({type:"analyze", league:L && L.name, give:[...S.give], get:[...S.get], result:r, t:Date.now()});
+  }catch(err){ showErr(err.message); }
+  finally{ busy(btn, false); }
+};
+function renderAnalysis(r){
+  const v = String(r.verdict||"counter").toLowerCase(), bal = Math.max(-100, Math.min(100, Number(r.balance)||0)), ps = r.players || [];
+  const pl = s => ps.filter(p => p.side === s).map(p => `<div class="pl"><div class="top"><span><span class="side-tag" style="color:var(--${s})">${s==="give"?"Give":"Get"}</span>${esc(p.name)}</span><span class="val">${esc(p.value)}</span></div><div class="why">${esc(p.note)}</div></div>`).join("");
+  $("result").innerHTML = `
+    <div class="verdict"><div class="vhead"><span class="badge b-${esc(v)}">${esc(v)}</span><span class="small">Your grade: <b style="color:var(--text);font-size:18px">${esc(r.grade||"–")}</b></span></div>
+      <p style="margin:10px 0 0">${esc(r.summary)}</p>
+      <div class="bar"><div class="pin" style="left:${(bal+100)/2}%"></div></div><div class="mlabels"><span>They win</span><span>Fair</span><span>You win</span></div></div>
+    <div class="card"><h3>Player breakdown</h3><div class="players">${pl("give")}${pl("get")}</div></div>
+    ${r.rosterFit ? `<div class="card"><h3>Roster fit</h3>${esc(r.rosterFit)}</div>` : ""}
+    ${r.partnerView ? `<div class="card"><h3>Will they accept?</h3>${esc(r.partnerView)}</div>` : ""}
+    ${(r.risks||[]).length ? `<div class="card"><h3>Risks</h3><ul class="clean">${r.risks.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
+    ${r.counter && r.counter.ask ? `<div class="card"><h3>Counter-offer</h3><div class="counter"><b>Try:</b> ${esc(r.counter.ask)}<div class="small" style="margin-top:6px">${esc(r.counter.why)}</div></div></div>` : ""}`;
+  $("result").scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+/* ---------- ideas ---------- */
+$("ideasBtn").onclick = async () => {
+  const L = active(), me = myTeam(L);
+  if(L && !me){ showErr("Pick which team is yours under League first."); return; }
+  const roster = me ? `${me.name} (${me.record}): ${fmtRoster(me)}` : $("roster2").value.trim();
+  if(!roster){ showErr("Connect a league or paste your roster."); return; }
+  const others = L ? L.teams.filter(t => !t.isMine).map(t => `${t.name} (${t.record}): ${fmtRoster(t)}`).join("\n") : $("others").value.trim();
+  const prompt = `${base()}
+
+${leagueContext()}
+My team: ${roster}
+Biggest need: ${$("need").value.trim() || "you decide"}. Goal: ${$("goal2").value}.
+${$("expendable").value.trim() ? "Players I'd move: "+$("expendable").value.trim() : ""}
+${others ? "Other teams:\n"+others : "No partner rosters given; suggest realistic, commonly rostered targets."}
+
+Suggest 4 realistic trades that improve my team and that a specific other manager would plausibly accept given THEIR roster and record (use only players/picks actually on the rosters when rosters are given). After any research, end with ONLY this JSON:
+{"assessment":"2 sentences on my strengths and holes","ideas":[{"title":"","partner":"team name","give":["…"],"get":["…"],"why":"1-2 sentences","pitch":"one-line message to send the other manager"}]}`;
+  const btn = $("ideasBtn"); busy(btn, true, "Scouting the league…"); $("result").innerHTML = "";
+  try{ const r = await claude(prompt); renderIdeas(r); addHist({type:"ideas", league:L && L.name, need:$("need").value.trim(), result:r, t:Date.now()}); }
+  catch(err){ showErr(err.message); }
+  finally{ busy(btn, false); }
+};
+function renderIdeas(r){
+  $("result").innerHTML = `
+    ${r.assessment ? `<div class="card"><h3>Your team</h3>${esc(r.assessment)}</div>` : ""}
+    <div class="card"><h3>Trade ideas</h3>${(r.ideas||[]).map((d,i) => `<div class="idea">
+      <div class="cond" style="font-size:19px;font-weight:700">${esc(d.title)}</div>
+      ${d.partner ? `<div class="small">With: ${esc(d.partner)}</div>` : ""}
+      <div class="pills">${(d.give||[]).map(x => `<span class="pill g">− ${esc(x)}</span>`).join("")}${(d.get||[]).map(x => `<span class="pill r">+ ${esc(x)}</span>`).join("")}</div>
+      <div style="font-size:14px">${esc(d.why)}</div>
+      ${d.pitch ? `<div class="small" style="margin-top:6px;font-style:italic">“${esc(d.pitch)}”</div>` : ""}
+      <div style="margin-top:8px;display:flex;gap:14px"><button class="linkbtn" data-load="${i}">Analyze this deal →</button>${d.pitch ? `<button class="linkbtn" data-copy="${i}">Copy pitch</button>` : ""}</div>
+    </div>`).join("")}</div>`;
+  $("result").onclick = async e => {
+    const l = e.target.closest("[data-load]");
+    if(l){ const d = r.ideas[+l.dataset.load]; S.give = [...(d.give||[])]; S.get = [...(d.get||[])];
+      const L = active(); if(L && d.partner && L.teams.some(t => t.name === d.partner && !t.isMine)) $("partner").value = d.partner;
+      renderSide("give"); renderSide("get"); renderPartner(); document.querySelector('[data-tab="analyze"]').click(); window.scrollTo({top:0, behavior:"smooth"}); }
+    const c = e.target.closest("[data-copy]");
+    if(c){ try{ await navigator.clipboard.writeText(r.ideas[+c.dataset.copy].pitch); c.textContent = "Copied ✓"; }catch(err){ c.textContent = "Couldn't copy"; } }
+  };
+  $("result").scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+/* ---------- history ---------- */
+function addHist(h){ const a = store.get("td-hist", []); a.unshift(h); store.set("td-hist", a.slice(0,15)); renderHist(); }
+function renderHist(){
+  const a = store.get("td-hist", []);
+  $("histCard").classList.toggle("hidden", !a.length);
+  $("hist").innerHTML = a.map((h,i) => {
+    const label = h.type === "analyze" ? `${h.give.join(", ")} → ${h.get.join(", ")}` : `Trade ideas${h.need ? " · "+h.need : ""}`;
+    const tail = h.type === "analyze" ? `${String(h.result.verdict||"").toUpperCase()} ${h.result.grade||""}` : `${(h.result.ideas||[]).length} ideas`;
+    return `<div class="hitem" data-h="${i}"><span>${esc(label)}</span><span>${esc(tail)}</span></div>`;
+  }).join("");
+}
+$("hist").onclick = e => {
+  const it = e.target.closest("[data-h]"); if(!it) return;
+  const h = store.get("td-hist", [])[+it.dataset.h]; if(!h) return;
+  if(h.type === "analyze"){ S.give = [...h.give]; S.get = [...h.get]; renderSide("give"); renderSide("get"); renderPartner(); document.querySelector('[data-tab="analyze"]').click(); renderAnalysis(h.result); }
+  else { document.querySelector('[data-tab="ideas"]').click(); renderIdeas(h.result); }
+};
+$("clearHist").onclick = () => { store.set("td-hist", []); renderHist(); };
+
+/* ---------- init ---------- */
+renderSports(); renderSide("give"); renderSide("get"); renderLeague(); renderHist();
+if(!settings.key) $("result").innerHTML = `<div class="card"><b>Welcome!</b> <span class="small">1) Tap <b>+ Connect a league</b> and enter your Sleeper username (or an ESPN league ID). 2) Add your Anthropic API key in ⚙ Settings to unlock trade analysis.</span></div>`;
+const L0 = active();
+if(L0 && (L0.platform === "Sleeper" || (L0.platform === "ESPN" && L0.game)) && Date.now() - (L0.updated||0) > 3*3600e3) refreshLeague(L0, false);
+</script>
+</body>
+</html>
