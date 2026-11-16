@@ -191,7 +191,7 @@ ul.clean{margin:0;padding-left:18px}ul.clean li{margin:4px 0}
 
   <div class="tabs">
     <button class="on" data-tab="analyze">Analyze a trade</button>
-    <button data-tab="ideas">Find trades</button>
+    <button data-tab="ideas">Trade ideas</button>
   </div>
 
   <!-- ANALYZE -->
@@ -226,11 +226,19 @@ ul.clean{margin:0;padding-left:18px}ul.clean li{margin:4px 0}
       </details>
     </div>
     <button class="go" id="analyzeBtn" data-label="Analyze trade">Analyze trade</button>
+    <div id="recoBanner" class="card hidden" style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;cursor:pointer;border-color:#1f6b4a"></div>
   </section>
 
   <!-- IDEAS -->
   <section id="tab-ideas" class="hidden">
-    <div class="card"><div class="stack">
+    <div class="card hidden" id="recoHead">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+        <div><div class="cond" style="font-size:22px;font-weight:800;text-transform:uppercase">Recommended for <span id="recoTeam" style="color:var(--accent)"></span></div>
+          <div class="small" id="recoMeta">Trades built from every roster in your league</div></div>
+        <button class="btn2" id="recoRefresh" title="New recommendations">↻</button>
+      </div>
+    </div>
+    <div class="card"><details class="plus" id="customize" open><summary>Customize what you're looking for</summary><div class="inner"><div class="stack">
       <div id="roster2Field"><label>Your roster</label><textarea id="roster2" style="min-height:100px" placeholder="Paste your roster, or connect a league"></textarea></div>
       <div class="grid">
         <div><label>Biggest need</label><input id="need" placeholder="e.g. RB2, saves"></div>
@@ -239,8 +247,9 @@ ul.clean{margin:0;padding-left:18px}ul.clean li{margin:4px 0}
       <div><label>Players you'd move (optional)</label><input id="expendable" placeholder="e.g. surplus WRs"></div>
       <div id="othersField"><label>Other teams' rosters (optional)</label><textarea id="others" placeholder="Paste a trade partner's roster"></textarea></div>
       <div class="small hidden" id="othersAuto">Every team's roster from your connected league is included automatically.</div>
-    </div></div>
+    </div></div></details></div>
     <button class="go" id="ideasBtn" data-label="Find trade ideas">Find trade ideas</button>
+    <div id="ideasOut" style="margin-top:14px"></div>
   </section>
 
   <div id="result"></div>
@@ -519,7 +528,7 @@ function renderLeague(){
   $("manualSettings").classList.toggle("hidden", !!L);
   ["rosterField","roster2Field","othersField"].forEach(id => $(id).classList.toggle("hidden", !!(L && myTeam(L))));
   $("othersAuto").classList.toggle("hidden", !L);
-  if(!L){ $("leagueSummary").innerHTML = ""; renderPartner(); return; }
+  if(!L){ $("leagueSummary").innerHTML = ""; renderPartner(); afterLeagueChange(); return; }
   const me = myTeam(L);
   const ago = L.updated ? Math.round((Date.now()-L.updated)/60000) : null;
   $("leagueSummary").innerHTML = `
@@ -535,8 +544,15 @@ function renderLeague(){
     </details>`;
   $("mineSel").onchange = e => { L.teams.forEach((t,i) => t.isMine = String(i) === e.target.value); saveLeagues(); renderLeague(); };
   if($("refreshLg")) $("refreshLg").onclick = () => refreshLeague(L, true);
+  afterLeagueChange();
   $("removeLg").onclick = () => { leagues = leagues.filter(x => x.key !== L.key); activeKey = ""; store.set("td-active",""); saveLeagues(); renderLeague(); };
   renderPartner();
+}
+let lastRecoKey = null;
+function afterLeagueChange(){
+  const k = recoKey();
+  if(k !== lastRecoKey){ lastRecoKey = k; $("ideasOut").innerHTML = ""; if(S.tab === "ideas") openIdeasTab(); }
+  renderRecoUI();
 }
 async function refreshLeague(L, manual){
   const b = $("refreshLg"); if(b){ b.disabled = true; b.innerHTML = '<span class="spin" style="margin:0"></span>'; }
@@ -590,6 +606,7 @@ document.querySelector(".tabs").onclick = e => {
   $("tab-analyze").classList.toggle("hidden", S.tab !== "analyze");
   $("tab-ideas").classList.toggle("hidden", S.tab !== "ideas");
   $("result").innerHTML = "";
+  if(S.tab === "ideas") openIdeasTab();
 };
 
 /* ---------- Claude API ---------- */
@@ -688,39 +705,88 @@ function renderAnalysis(r){
 }
 
 /* ---------- ideas ---------- */
-$("ideasBtn").onclick = async () => {
-  const L = active(), me = myTeam(L);
-  if(L && !me){ showErr("Pick which team is yours under League first."); return; }
-  const roster = me ? `${me.name} (${me.record}): ${fmtRoster(me)}` : $("roster2").value.trim();
-  if(!roster){ showErr("Connect a league or paste your roster."); return; }
-  const others = L ? L.teams.filter(t => !t.isMine).map(t => `${t.name} (${t.record}): ${fmtRoster(t)}`).join("\n") : $("others").value.trim();
+const recoKey = () => { const L = active(), me = myTeam(L); return L && me ? "td-reco-" + L.key + ":" + me.name : null; };
+let ideasRunning = false;
+async function runIdeas(){
+  if(ideasRunning) return;
+  const L = active(), me = myTeam(L), out = $("ideasOut");
+  const err = m => { out.innerHTML = `<div class="err">${esc(m)}</div>`; };
+  if(L && !me){ err("Pick which team is yours under League first."); return; }
+  const roster = me ? `${me.name} (${me.record}${me.pf ? ", "+me.pf+" pts for" : ""}): ${fmtRoster(me)}` : $("roster2").value.trim();
+  if(!roster){ err("Connect a league or paste your roster."); return; }
+  const others = L ? L.teams.filter(t => !t.isMine).map(t => `${t.name} (${t.record}${t.pf ? ", "+t.pf+" pts for" : ""}): ${fmtRoster(t)}`).join("\n") : $("others").value.trim();
+  const need = $("need").value.trim(), goal = $("goal2").value;
   const prompt = `${base()}
 
 ${leagueContext()}
 My team: ${roster}
-Biggest need: ${$("need").value.trim() || "you decide"}. Goal: ${$("goal2").value}.
+Biggest need: ${need || "work it out from my roster and the lineup slots"}. Goal: ${goal === "Balanced" && !need ? "decide whether I should push to win now or build for the future, based on my record, points and roster age, and say which" : goal}.
 ${$("expendable").value.trim() ? "Players I'd move: "+$("expendable").value.trim() : ""}
 ${others ? "Other teams:\n"+others : "No partner rosters given; suggest realistic, commonly rostered targets."}
 
-Suggest 4 realistic trades that improve my team and that a specific other manager would plausibly accept given THEIR roster and record (use only players/picks actually on the rosters when rosters are given). After any research, end with ONLY this JSON:
-{"assessment":"2 sentences on my strengths and holes","ideas":[{"title":"","partner":"team name","give":["…"],"get":["…"],"why":"1-2 sentences","pitch":"one-line message to send the other manager"}]}`;
-  const btn = $("ideasBtn"); busy(btn, true, "Scouting the league…"); $("result").innerHTML = "";
-  try{ const r = await claude(prompt); renderIdeas(r); addHist({type:"ideas", league:L && L.name, need:$("need").value.trim(), result:r, t:Date.now()}); }
-  catch(err){ showErr(err.message); }
-  finally{ busy(btn, false); }
-};
+Work like a sharp trade scout:
+1. Find my weakest starting spots for this lineup, plus my surplus (depth I can't start, injured or aging players, picks).
+2. For each other team, judge whether it's a contender or a rebuilder from its record and points, and what it lacks.
+3. Match my surplus to their needs and their surplus to mine.
+Recommend the 5 best realistic trades, best first. Use only players and picks that are actually on the rosters. Each trade should be fair enough that the other manager would plausibly accept. Spread the trades across different partners where you can.
+After any research, end with ONLY this JSON:
+{"assessment":"2 sentences on my strengths, holes and whether I should be buying or selling","direction":"buy"|"sell"|"balanced",
+"ideas":[{"title":"short punchy label","partner":"exact team name","give":["…"],"get":["…"],"why":"1-2 sentences on why it helps me","theyWin":"one sentence on why they'd say yes","impact":"high"|"medium"|"low","pitch":"one-line message to send the other manager"}]}`;
+  ideasRunning = true;
+  const btn = $("ideasBtn"); busy(btn, true, "Scouting the league…"); $("recoRefresh").disabled = true;
+  out.innerHTML = `<div class="card small"><span class="spin"></span>Reading every roster in your league${settings.web ? " and checking the latest news" : ""}… this can take up to a minute.</div>`;
+  try{
+    const r = await claude(prompt);
+    if(!r || !Array.isArray(r.ideas)) throw new Error("No trade ideas came back. Try again.");
+    renderIdeas(r);
+    const k = recoKey(); if(k) store.set(k, {t:Date.now(), r});
+    renderRecoUI();
+    addHist({type:"ideas", league:L && L.name, need, result:r, t:Date.now()});
+  }catch(e){ err(e.message); }
+  finally{ ideasRunning = false; busy(btn, false); $("recoRefresh").disabled = false; }
+}
+$("ideasBtn").onclick = runIdeas;
+$("recoRefresh").onclick = runIdeas;
+
+function renderRecoUI(){
+  const L = active(), me = myTeam(L), k = recoKey(), cache = k ? store.get(k, null) : null;
+  $("recoHead").classList.toggle("hidden", !me);
+  $("customize").open = !me;
+  $("ideasBtn").textContent = $("ideasBtn").dataset.label = me ? "Get new ideas" : "Find trade ideas";
+  if(me){
+    $("recoTeam").textContent = me.name;
+    $("recoMeta").textContent = cache ? `Updated ${agoText(cache.t)} · tap ↻ for fresh ideas` : "Trades built from every roster in your league";
+  }
+  const n = cache && cache.r && (cache.r.ideas||[]).length;
+  $("recoBanner").classList.toggle("hidden", !n);
+  if(n) $("recoBanner").innerHTML = `<div><b>💡 ${n} recommended trades for ${esc(me.name)}</b><div class="small">${esc(cache.r.assessment||"")}</div></div><span style="color:var(--accent);font-size:22px">›</span>`;
+}
+function agoText(t){ const m = Math.round((Date.now()-t)/60000); return m < 1 ? "just now" : m < 60 ? m+"m ago" : m < 1440 ? Math.round(m/60)+"h ago" : Math.round(m/1440)+"d ago"; }
+$("recoBanner").onclick = () => document.querySelector('[data-tab="ideas"]').click();
+function openIdeasTab(){
+  renderRecoUI();
+  const k = recoKey(), cache = k ? store.get(k, null) : null;
+  if(cache) renderIdeas(cache.r);
+  else if(k && settings.key && !ideasRunning) runIdeas();
+  else if(!ideasRunning) $("ideasOut").innerHTML = k && !settings.key ? `<div class="card small">Add your Anthropic API key in ⚙ Settings to get recommendations.</div>` : "";
+}
+
 function renderIdeas(r){
-  $("result").innerHTML = `
-    ${r.assessment ? `<div class="card"><h3>Your team</h3>${esc(r.assessment)}</div>` : ""}
+  const imp = {high:"var(--accent)", medium:"var(--warn)", low:"var(--muted)"};
+  const dir = {buy:"Buying: push to win now", sell:"Selling: build for the future", balanced:"Balanced: improve without mortgaging the future"}[r.direction];
+  $("ideasOut").innerHTML = `
+    ${r.assessment ? `<div class="card"><h3>Your team</h3>${dir ? `<div style="font-weight:700;margin-bottom:6px;color:var(--accent)">${esc(dir)}</div>` : ""}${esc(r.assessment)}</div>` : ""}
     <div class="card"><h3>Trade ideas</h3>${(r.ideas||[]).map((d,i) => `<div class="idea">
-      <div class="cond" style="font-size:19px;font-weight:700">${esc(d.title)}</div>
+      <div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline"><div class="cond" style="font-size:19px;font-weight:700">${i+1}. ${esc(d.title)}</div>
+        ${d.impact ? `<span class="small" style="color:${imp[d.impact]||"var(--muted)"};font-weight:700;text-transform:uppercase;white-space:nowrap">${esc(d.impact)} impact</span>` : ""}</div>
       ${d.partner ? `<div class="small">With: ${esc(d.partner)}</div>` : ""}
       <div class="pills">${(d.give||[]).map(x => `<span class="pill g">− ${esc(x)}</span>`).join("")}${(d.get||[]).map(x => `<span class="pill r">+ ${esc(x)}</span>`).join("")}</div>
       <div style="font-size:14px">${esc(d.why)}</div>
+      ${d.theyWin ? `<div class="small" style="margin-top:4px"><b style="color:var(--text)">Why they'd say yes:</b> ${esc(d.theyWin)}</div>` : ""}
       ${d.pitch ? `<div class="small" style="margin-top:6px;font-style:italic">“${esc(d.pitch)}”</div>` : ""}
       <div style="margin-top:8px;display:flex;gap:14px"><button class="linkbtn" data-load="${i}">Analyze this deal →</button>${d.pitch ? `<button class="linkbtn" data-copy="${i}">Copy pitch</button>` : ""}</div>
     </div>`).join("")}</div>`;
-  $("result").onclick = async e => {
+  $("ideasOut").onclick = async e => {
     const l = e.target.closest("[data-load]");
     if(l){ const d = r.ideas[+l.dataset.load]; S.give = [...(d.give||[])]; S.get = [...(d.get||[])];
       const L = active(); if(L && d.partner && L.teams.some(t => t.name === d.partner && !t.isMine)) $("partner").value = d.partner;
@@ -728,7 +794,6 @@ function renderIdeas(r){
     const c = e.target.closest("[data-copy]");
     if(c){ try{ await navigator.clipboard.writeText(r.ideas[+c.dataset.copy].pitch); c.textContent = "Copied ✓"; }catch(err){ c.textContent = "Couldn't copy"; } }
   };
-  $("result").scrollIntoView({behavior:"smooth", block:"start"});
 }
 
 /* ---------- history ---------- */
